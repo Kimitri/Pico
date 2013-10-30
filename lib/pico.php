@@ -10,8 +10,11 @@ use \Michelf\MarkdownExtra;
  * @version 0.8
  */
 class Pico {
+	const HIPPYCACHE_TAG_BEGIN = '/**~~HIPPYCACHE-BEGIN~~**/';
+	const HIPPYCACHE_TAG_END = '/**~~HIPPYCACHE-END~~**/';
 
 	private $plugins;
+
 
 	/**
 	 * The constructor carries out all the processing in Pico.
@@ -19,6 +22,12 @@ class Pico {
 	 */
 	public function __construct()
 	{
+		// Import Hippycache vars
+		global $hippycache;
+		
+		$request_time = time();
+		
+		
 		// Load plugins
 		$this->load_plugins();
 		$this->run_hooks('plugins_loaded');
@@ -44,6 +53,16 @@ class Pico {
 		// Load the file
 		if(is_dir($file)) $file = CONTENT_DIR . $url .'/index'. CONTENT_EXT;
 		else $file .= CONTENT_EXT;
+		
+		
+		// Get data from Hippycache
+		if ($hippycache !== NULL && $hippycache['created'] > $request_time - HIPPYCACHE_TTL) {
+			$pages = (isset($hippycache['pages'])) ? $hippycache['pages'] : FALSE;
+		}
+		else {
+			$hippycache = NULL;
+		}
+		
 
 		$this->run_hooks('before_load_content', array(&$file));
 		if(file_exists($file)){
@@ -65,7 +84,16 @@ class Pico {
 		$this->run_hooks('content_parsed', array(&$content)); // Depreciated @ v0.8
 		
 		// Get all the pages
-		$pages = $this->get_pages($settings['base_url'], $settings['pages_order_by'], $settings['pages_order'], $settings['excerpt_length']);
+		if (!isset($hippycache['pages'])) {
+			$pages = $this->get_pages($settings['base_url'], $settings['pages_order_by'], $settings['pages_order'], $settings['excerpt_length']);
+			$hippycache = array(
+				'created' => $request_time,
+				'pages' => $pages
+			);
+			
+			$this->writeHippycache($hippycache);
+		}
+		
 		$prev_page = array();
 		$current_page = array();
 		$next_page = array();
@@ -355,5 +383,18 @@ class Pico {
 		if(count($words) > $word_limit) $excerpt .= '&hellip;';
 		return $excerpt;
 	}
-
+	
+	
+	
+	private function writeHippycache($hippycache = NULL) {
+		$index_content = file_get_contents('index.php');
+		$index_begin = strpos($index_content, self::HIPPYCACHE_TAG_BEGIN);
+		$index_end = strrpos($index_content, self::HIPPYCACHE_TAG_END);
+		
+		$before = substr($index_content, 0, $index_begin) . self::HIPPYCACHE_TAG_BEGIN;
+		$after = self::HIPPYCACHE_TAG_END . substr($index_content, $index_end + strlen(self::HIPPYCACHE_TAG_END));
+		
+		$content = $before . "\n" . '$hippycache=' . var_export($hippycache, TRUE) . ';' . "\n" . $after;
+		file_put_contents('index.php', $content);
+	}
 }
