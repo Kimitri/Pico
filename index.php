@@ -10,9 +10,8 @@ define('PLUGINS_DIR', ROOT_DIR .'plugins/');
 define('THEMES_DIR', ROOT_DIR .'themes/');
 define('CACHE_DIR', LIB_DIR .'cache/');
 
-// Define Hippycache time-to-live
-define('HIPPYCACHE_TTL', 60 * 5);
-define('HIPPYCACHE_FILE', 'hippycache.php');
+define('HIPPYCACHE_TTL', 60 * 5); // Hippycache time-to-live
+define('HIPPYCACHE_FILE', 'hippycache.php'); // Hippycache file
 
 require(ROOT_DIR .'vendor/autoload.php');
 require(LIB_DIR .'pico.php');

@@ -22,8 +22,6 @@ class Pico {
 		// Import Hippycache vars
 		global $hippycache;
 		
-		$request_time = time();
-		
 		
 		// Load plugins
 		$this->load_plugins();
@@ -79,7 +77,7 @@ class Pico {
 			$pages = $this->get_pages($settings['base_url'], $settings['pages_order_by'], $settings['pages_order'], $settings['excerpt_length']);
 			
 			$hippycache = array(
-				'created' => $request_time,
+				'created' => time(),
 				'pages' => $pages
 			);
 			
@@ -90,7 +88,8 @@ class Pico {
 			$hippycache_status = 'HIT';
 		}
 		
-		header('X-Pico-Hippycache: ' . $hippycache_status);
+		$this->outputCacheHeaders($hippycache_status, $hippycache['created']);
+		
 		
 		
 		
@@ -393,5 +392,11 @@ class Pico {
 	private function writeHippycache($hippycache = NULL) {
 		$content = '<?php $hippycache=' . var_export($hippycache, TRUE) . '; ?>';
 		file_put_contents('hippycache.php', $content);
+	}
+	
+	
+	private function outputCacheHeaders($hippycache_status, $created) {
+		header('Expires: ' . gmdate('D, d M Y H:i:s', $created + HIPPYCACHE_TTL) . ' GMT');
+		header('X-Pico-Hippycache: ' . $hippycache_status);
 	}
 }
