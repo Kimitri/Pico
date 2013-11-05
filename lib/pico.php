@@ -74,6 +74,7 @@ class Pico {
 		
 		
 		// Get all the pages
+		$hippycache_status = 'MISS';
 		if (!isset($hippycache['pages'])) {
 			$pages = $this->get_pages($settings['base_url'], $settings['pages_order_by'], $settings['pages_order'], $settings['excerpt_length']);
 			
@@ -86,7 +87,10 @@ class Pico {
 		}
 		else {
 			$pages = $hippycache['pages'];
+			$hippycache_status = 'HIT';
 		}
+		
+		header('X-Pico-Hippycache: ' . $hippycache_status);
 		
 		
 		
