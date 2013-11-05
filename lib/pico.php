@@ -10,9 +10,6 @@ use \Michelf\MarkdownExtra;
  * @version 0.8
  */
 class Pico {
-	const HIPPYCACHE_TAG_BEGIN = '/**~~HIPPYCACHE-BEGIN~~**/';
-	const HIPPYCACHE_TAG_END = '/**~~HIPPYCACHE-END~~**/';
-
 	private $plugins;
 
 
@@ -55,15 +52,6 @@ class Pico {
 		else $file .= CONTENT_EXT;
 		
 		
-		// Get data from Hippycache
-		if ($hippycache !== NULL && $hippycache['created'] > $request_time - HIPPYCACHE_TTL) {
-			$pages = (isset($hippycache['pages'])) ? $hippycache['pages'] : FALSE;
-		}
-		else {
-			$hippycache = NULL;
-		}
-		
-
 		$this->run_hooks('before_load_content', array(&$file));
 		if(file_exists($file)){
 			$content = file_get_contents($file);
@@ -83,9 +71,12 @@ class Pico {
 		$this->run_hooks('after_parse_content', array(&$content));
 		$this->run_hooks('content_parsed', array(&$content)); // Depreciated @ v0.8
 		
+		
+		
 		// Get all the pages
 		if (!isset($hippycache['pages'])) {
 			$pages = $this->get_pages($settings['base_url'], $settings['pages_order_by'], $settings['pages_order'], $settings['excerpt_length']);
+			
 			$hippycache = array(
 				'created' => $request_time,
 				'pages' => $pages
@@ -93,6 +84,11 @@ class Pico {
 			
 			$this->writeHippycache($hippycache);
 		}
+		else {
+			$pages = $hippycache['pages'];
+		}
+		
+		
 		
 		$prev_page = array();
 		$current_page = array();
@@ -385,16 +381,13 @@ class Pico {
 	}
 	
 	
-	
+	/**
+	 * Writes data to the Hippycache file.
+	 * 
+	 * @param  mixed $hippycache Data to write.
+	 */
 	private function writeHippycache($hippycache = NULL) {
-		$index_content = file_get_contents('index.php');
-		$index_begin = strpos($index_content, self::HIPPYCACHE_TAG_BEGIN);
-		$index_end = strrpos($index_content, self::HIPPYCACHE_TAG_END);
-		
-		$before = substr($index_content, 0, $index_begin) . self::HIPPYCACHE_TAG_BEGIN;
-		$after = self::HIPPYCACHE_TAG_END . substr($index_content, $index_end + strlen(self::HIPPYCACHE_TAG_END));
-		
-		$content = $before . "\n" . '$hippycache=' . var_export($hippycache, TRUE) . ';' . "\n" . $after;
-		file_put_contents('index.php', $content);
+		$content = '<?php $hippycache=' . var_export($hippycache, TRUE) . '; ?>';
+		file_put_contents('hippycache.php', $content);
 	}
 }

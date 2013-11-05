@@ -12,12 +12,15 @@ define('CACHE_DIR', LIB_DIR .'cache/');
 
 // Define Hippycache time-to-live
 define('HIPPYCACHE_TTL', 60 * 5);
+define('HIPPYCACHE_FILE', 'hippycache.php');
 
 require(ROOT_DIR .'vendor/autoload.php');
 require(LIB_DIR .'pico.php');
 
-/**~~HIPPYCACHE-BEGIN~~**/
 $hippycache = NULL;
-/**~~HIPPYCACHE-END~~**/
+
+if (file_exists(HIPPYCACHE_FILE) && filemtime(HIPPYCACHE_FILE) > time() - HIPPYCACHE_TTL) {
+  include_once(HIPPYCACHE_FILE);
+}
 
 $pico = new Pico();
