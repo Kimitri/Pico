@@ -395,6 +395,12 @@ class Pico {
 	}
 	
 	
+	/**
+	 * Outputs cache headers.
+	 * 
+	 * @param  string $hippycache_status Hippycache status string. (HIT | MISS)
+	 * @param  int    $created           Cache file creation timestamp.
+	 */
 	private function outputCacheHeaders($hippycache_status, $created) {
 		header('Expires: ' . gmdate('D, d M Y H:i:s', $created + HIPPYCACHE_TTL) . ' GMT');
 		header('X-Pico-Hippycache: ' . $hippycache_status);
